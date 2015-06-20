@@ -115,7 +115,7 @@ while true ; do
 
         # do we still need to be in cooldown?
         if [ EMERGENCY_COOLDOWN_TIMELEFT <= 0]; then
-            EMERGENCY_COOLDOWN = 0;
+            EMERGENCY_COOLDOWN=0;
         else
             sleep 5;
             continue;
