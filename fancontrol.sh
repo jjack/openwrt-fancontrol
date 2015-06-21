@@ -149,7 +149,7 @@ while true ; do
 
             EMERGENCY_COOLDOWN=0
 
-            set_fan $DEFAULT_SPEED
+            set_fan DEFAULT $DEFAULT_SPEED
 
         else
             if [ $VERBOSE == 1 ]; then
