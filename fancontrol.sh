@@ -76,7 +76,7 @@ check_temp_change() {
     TEMP_CHANGE=$(($3 - $2));
 
     if [ $VERBOSE == 1 ]; then
-        echo "${1} original temp: ${2} | new temp: ${3} | change: ${TEMP_CHANGE}"
+        echo "${1} current temp: ${3} | previous temp: ${2} | change: ${TEMP_CHANGE}"
     fi
 
     if [ $(float_ge $TEMP_CHANGE 1.5) == 1 ]; then
