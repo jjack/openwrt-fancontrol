@@ -72,14 +72,14 @@ check_load() {
 }
 
 # makes sure that the temperatures haven't fluctuated by more than 1.5 degrees
-check_temp_delta() {
-    TEMP_DELTA=$(($3 - $2));
+check_temp_change() {
+    TEMP_CHANGE=$(($3 - $2));
 
     if [ $VERBOSE == 1 ]; then
-        echo "${1} original temp: ${2} | new temp: ${3} | delta: ${TEMP_DELTA}"
+        echo "${1} original temp: ${2} | new temp: ${3} | change: ${TEMP_CHANGE}"
     fi
 
-    if [ $(float_ge $TEMP_DELTA 1.5) == 1 ]; then
+    if [ $(float_ge $TEMP_CHANGE 1.5) == 1 ]; then
        start_emergency_cooldown;
     fi
 }
@@ -115,7 +115,7 @@ set_fan START 100
 # - look at temperature deltas every 5 seconds
 # - look at raw cpu temp every 20 seconds
 while true ; do
-    LOOP_COUNTER=$(($LOOP_COUNTER + 1));
+    LOOP_COUNTER=$(($LOOP_COUNTER + 1))
 
     # save the previous temperatures
     LAST_CPU_TEMP=$CPU_TEMP
@@ -128,13 +128,13 @@ while true ; do
     WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
 
     # handle emergency cooldown stuff
-    if [ EMERGENCY_COOLDOWN == 1 ]; then
+    if [ $EMERGENCY_COOLDOWN == 1 ]; then
 
         # reduce the number of seconds left in emergency cooldown mode
-        EMERGENCY_COOLDOWN_TIMER=$(($EMERGENCY_COOLDOWN_TIMER} - 5))
+        EMERGENCY_COOLDOWN_TIMER=$((${EMERGENCY_COOLDOWN_TIMER} - 5))
 
         # do we still need to be in cooldown?
-        if [ $EMERGENCY_COOLDOWN_TIMER <= 0 ]; then
+        if [ $EMERGENCY_COOLDOWN_TIMER -le 0 ]; then
 
             if [ $VERBOSE == 1 ]; then
                 echo "Exiting Emergency Cooldown Mode!"
@@ -142,6 +142,10 @@ while true ; do
 
             EMERGENCY_COOLDOWN=0
         else
+            if [ $VERBOSE == 1 ]; then
+                echo "Still in Emergency Cooldown. ${EMERGENCY_COOLDOWN_TIMER} seconds left."
+            fi
+
             sleep 5
 
             continue
@@ -152,13 +156,13 @@ while true ; do
     check_load
 
     # check to see if the cpu, ram, or wifi temps have spiked
-    check_temp_delta CPU $CPU_TEMP $LAST_CPU_TEMP
-    check_temp_delta RAM $RAM_TEMP $LAST_RAM_TEMP
-    check_temp_delta WIFI $WIFI_TEMP $LAST_WIFI_TEMP
+    check_temp_change CPU $CPU_TEMP $LAST_CPU_TEMP
+    check_temp_change RAM $RAM_TEMP $LAST_RAM_TEMP
+    check_temp_change WIFI $WIFI_TEMP $LAST_WIFI_TEMP
 
     # check the raw CPU temps every 20 seconds
-    if [ $(($LOOP_COUNTER % 4)) == 0 ] ; then
-        check_cpu_temp;
+    if [ $(($LOOP_COUNTER % 4)) == 0 ]; then
+        check_cpu_temp
     fi
 
     # wait 5 seconds and do this again
