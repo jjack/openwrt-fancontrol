@@ -3,7 +3,7 @@
 # OpenWRT fan control using RickStep's logic
 
 # set this to 1 for some debugging output
-VERBOSE=1
+VERBOSE=0
 
 # get some initial readings
 CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`        
@@ -33,14 +33,16 @@ fi
 # use this to make setting the fan a bit easier
 #     set_fan WHAT VALUE
 set_fan() {
-    if [ $VERBOSE == 1 ]; then
-        echo "setting fan to ${2} (${1}) ${FAN_CTRL}"
-    fi
-
     LAST_FAN_SPEED=`cat ${FAN_CTRL}`
 
-    # write the new speed to the fan controller
-    echo $2 > ${FAN_CTRL}
+    if [ $LAST_FAN_SPEED -ne $2 ]; then
+        if [ $VERBOSE == 1 ]; then
+            echo "setting fan to ${2} (${1}) ${FAN_CTRL}"
+        fi
+
+        # write the new speed to the fan controller
+        echo $2 > ${FAN_CTRL}
+    fi
 }
 
 # floating-point greater-than-or-equals-to using awk 'cause ash doesn't
