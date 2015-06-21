@@ -19,6 +19,7 @@ DEFAULT_SPEED=100
 EMERGENCY_COOLDOWN=0
 EMERGENCY_COOLDOWN_TIMER=0
 ELAPSED_TIME=0
+LAST_FAN_SPEED=$DEFAULT_SPEED
 
 # determine fan controller
 if [ -d /sys/devices/pwm_fan ]; then
@@ -35,6 +36,8 @@ set_fan() {
     if [ $VERBOSE == 1 ]; then
         echo "setting fan to ${2} (${1}) ${FAN_CTRL}"
     fi
+
+    LAST_FAN_SPEED=`cat ${FAN_CTRL}`
 
     # write the new speed to the fan controller
     echo $2 > ${FAN_CTRL}
@@ -88,6 +91,8 @@ check_temp_change() {
 
     if [ $(float_ge $TEMP_CHANGE 1.5) == 1 ]; then
        start_emergency_cooldown;
+
+       continue;
     fi
 }
 
@@ -149,7 +154,7 @@ while true ; do
 
             EMERGENCY_COOLDOWN=0
 
-            set_fan DEFAULT $DEFAULT_SPEED
+            set_fan LAST $LAST_FAN_SPEED
 
         else
             if [ $VERBOSE == 1 ]; then
