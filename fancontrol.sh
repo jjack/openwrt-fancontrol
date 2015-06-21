@@ -10,9 +10,15 @@ CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`
 RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input`   
 WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
 
+# SLEEP_DURATION and CPU_TEMP_CHECK need to be multiples of each other
+EMERGENCY_COOLDOWN_DURATION=30
+SLEEP_DURATION=5
+CPU_TEMP_CHECK=20
+DEFAULT_SPEED=100
+
 EMERGENCY_COOLDOWN=0
 EMERGENCY_COOLDOWN_TIMER=0
-LOOP_COUNTER=0
+ELAPSED_TIME=0
 
 # determine fan controller
 if [ -d /sys/devices/pwm_fan ]; then
@@ -30,6 +36,7 @@ set_fan() {
         echo "setting fan to ${2} (${1}) ${FAN_CTRL}"
     fi
 
+    # write the new speed to the fan controller
     echo $2 > ${FAN_CTRL}
 }
 
@@ -51,7 +58,7 @@ start_emergency_cooldown() {
 
     # toggle the cooldown bit to on and reset the timer
     EMERGENCY_COOLDOWN=1
-    EMERGENCY_COOLDOWN_TIMER=30
+    EMERGENCY_COOLDOWN_TIMER=$EMERGENCY_COOLDOWN_DURATION
 
     set_fan EMERGENCY 255
 }              
@@ -76,7 +83,7 @@ check_temp_change() {
     TEMP_CHANGE=$(($3 - $2));
 
     if [ $VERBOSE == 1 ]; then
-        echo "${1} current temp: ${3} | previous temp: ${2} | change: ${TEMP_CHANGE}"
+        echo "${1} original temp: ${2} | new temp: ${3} | change: ${TEMP_CHANGE}"
     fi
 
     if [ $(float_ge $TEMP_CHANGE 1.5) == 1 ]; then
@@ -107,15 +114,14 @@ check_cpu_temp() {
     fi
 }
 
-# start the fan initially at 100
-set_fan START 100
+# start the fan initially to $DEFAULT_SPEED
+set_fan START $DEFAULT_SPEED
 
 # the main program loop:
-# - look at load averages every 5 seconds
-# - look at temperature deltas every 5 seconds
-# - look at raw cpu temp every 20 seconds
+# - look at load averages every $SLEEP_DURATION seconds
+# - look at temperature deltas every $SLEEP_DURATION seconds
+# - look at raw cpu temp every $CPU_TEMP_CHECK seconds
 while true ; do
-    LOOP_COUNTER=$(($LOOP_COUNTER + 1))
 
     # save the previous temperatures
     LAST_CPU_TEMP=$CPU_TEMP
@@ -142,12 +148,15 @@ while true ; do
             fi
 
             EMERGENCY_COOLDOWN=0
+
+            set_fan $DEFAULT_SPEED
+
         else
             if [ $VERBOSE == 1 ]; then
                 echo "Still in Emergency Cooldown. ${EMERGENCY_COOLDOWN_TIMER} seconds left."
             fi
 
-            sleep 5
+            sleep $SLEEP_DURATION
 
             continue
         fi
@@ -161,16 +170,18 @@ while true ; do
     check_temp_change RAM $RAM_TEMP $LAST_RAM_TEMP
     check_temp_change WIFI $WIFI_TEMP $LAST_WIFI_TEMP
 
-    # check the raw CPU temps every 20 seconds
-    if [ $(($LOOP_COUNTER % 4)) == 0 ]; then
+    # check the raw CPU temps every $CPU_TEMP_CHECK seconds...
+    if [ $(( $ELAPSED_TIME % $CPU_TEMP_CHECK )) == 0 ]; then
         check_cpu_temp
     fi
 
-    # wait 5 seconds and do this again
+    # wait $SLEEP_DURATION seconds and do this again
     if [ $VERBOSE == 1 ]; then
-        echo "waiting 5 seconds..."
+        echo "waiting ${SLEEP_DURATION} seconds..."
         echo
     fi
 
-    sleep 5;
+    sleep $SLEEP_DURATION;
+
+    ELAPSED_TIME=$(($ELAPSED_TIME + $SLEEP_DURATION))
 done
