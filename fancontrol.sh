@@ -138,6 +138,7 @@ while true ; do
 
             if [ $VERBOSE == 1 ]; then
                 echo "Exiting Emergency Cooldown Mode!"
+                echo
             fi
 
             EMERGENCY_COOLDOWN=0
