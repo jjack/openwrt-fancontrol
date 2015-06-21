@@ -56,6 +56,7 @@ float_ge() {
 # start the emergency cooldown mode
 start_emergency_cooldown() {
     if [ $VERBOSE == 1 ]; then
+        echo
         echo "Starting Emergency Cooldown!"
     fi
 
@@ -128,16 +129,6 @@ set_fan START $DEFAULT_SPEED
 # - look at raw cpu temp every $CPU_TEMP_CHECK seconds
 while true ; do
 
-    # save the previous temperatures
-    LAST_CPU_TEMP=$CPU_TEMP
-    LAST_RAM_TEMP=$RAM_TEMP
-    LAST_WIFI_TEMP=$WIFI_TEMP
-
-    # and re-read the current temperatures
-    CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`
-    RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input`
-    WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
-
     # handle emergency cooldown stuff
     if [ $EMERGENCY_COOLDOWN == 1 ]; then
 
@@ -147,14 +138,14 @@ while true ; do
         # do we still need to be in cooldown?
         if [ $EMERGENCY_COOLDOWN_TIMER -le 0 ]; then
 
+            set_fan LAST $LAST_FAN_SPEED                              
+
+            EMERGENCY_COOLDOWN=0                                      
+
             if [ $VERBOSE == 1 ]; then
                 echo "Exiting Emergency Cooldown Mode!"
                 echo
             fi
-
-            EMERGENCY_COOLDOWN=0
-
-            set_fan LAST $LAST_FAN_SPEED
 
         else
             if [ $VERBOSE == 1 ]; then
@@ -166,6 +157,16 @@ while true ; do
             continue
         fi
     fi
+
+    # save the previous temperatures                                    
+    LAST_CPU_TEMP=$CPU_TEMP                                            
+    LAST_RAM_TEMP=$RAM_TEMP                                                      
+    LAST_WIFI_TEMP=$WIFI_TEMP                                                 
+
+    # and re-read the current temperatures            
+    CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`                     
+    RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input`           
+    WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
 
     # check the load averages
     check_load
