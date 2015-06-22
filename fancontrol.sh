@@ -2,23 +2,21 @@
 
 # OpenWRT fan control using RickStep and Chadster766's logic
 
-# set this to 1 for some debugging output
-VERBOSE=0
-
-# get some initial readings
-CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`        
-RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input`   
-WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
-
 # SLEEP_DURATION and CPU_TEMP_CHECK need to be multiples of each other
+VERBOSE=1
 EMERGENCY_COOLDOWN_DURATION=30
 SLEEP_DURATION=5
 CPU_TEMP_CHECK=20
 DEFAULT_SPEED=100
+EMERGENCY_COOLDOWN_TEMP_CHANGE=3                         
 
-EMERGENCY_COOLDOWN=0
-EMERGENCY_COOLDOWN_TIMER=0
-ELAPSED_TIME=0
+# DON'T MESS WITH THESE
+EMERGENCY_COOLDOWN=0                
+EMERGENCY_COOLDOWN_TIMER=0                         
+ELAPSED_TIME=0 
+CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`
+RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input`
+WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
 LAST_FAN_SPEED=$DEFAULT_SPEED
 
 # determine fan controller
@@ -96,7 +94,7 @@ check_temp_change() {
         echo "${1} original temp: ${2} | new temp: ${3} | change: ${TEMP_CHANGE}"
     fi
 
-    if [ $(float_ge $TEMP_CHANGE 1.5) == 1 ]; then
+    if [ $(float_ge $TEMP_CHANGE $EMERGENCY_COOLDOWN_TEMP_CHANGE) == 1 ]; then
        start_emergency_cooldown;
 
        continue;
