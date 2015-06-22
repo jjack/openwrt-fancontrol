@@ -11,13 +11,13 @@ DEFAULT_SPEED=100
 EMERGENCY_COOLDOWN_TEMP_CHANGE=3                         
 
 # DON'T MESS WITH THESE
+LAST_FAN_SPEED=$DEFAULT_SPEED
 EMERGENCY_COOLDOWN=0                
 EMERGENCY_COOLDOWN_TIMER=0                         
 ELAPSED_TIME=0 
-CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`
-RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input`
-WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
-LAST_FAN_SPEED=$DEFAULT_SPEED
+CPU_TEMP=0
+RAM_TEMP=0
+WIFI_TEMP=0
 
 # determine fan controller
 if [ -d /sys/devices/pwm_fan ]; then
@@ -27,6 +27,13 @@ elif [ -d /sys/devices/platform/pwm_fan ]; then
 else
     exit 0
 fi
+
+# retreive new cpu, ram, and wifi temps
+get_temps() {
+    CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input` 
+    RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input` 
+    WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
+}
 
 # use this to make setting the fan a bit easier
 #     set_fan WHAT VALUE
@@ -51,7 +58,7 @@ set_fan() {
 # like floats. instead of this:
 #     if [ $VALUE_1 >= $VALUE_2 ];
 # use this:
-#     if [ $(fge $VALUE_1 $VALUE_2) ];
+#     if [ $(fge $VALUE_1 $VALUE_2) == 1 ];
 float_ge() {
     awk -v n1=$1 -v n2=$2 "BEGIN { if ( n1 >= n2 ) exit 1; exit 0; }"
     echo $?
@@ -82,6 +89,8 @@ check_load() {
         # trigger the emergency cooldown if we're using more than 1 core
         if [ $(float_ge $LOAD 1.0) == 1 ]; then
             start_emergency_cooldown
+
+            break
         fi
     done
 }
@@ -127,6 +136,9 @@ check_cpu_temp() {
 # start the fan initially to $DEFAULT_SPEED
 set_fan START $DEFAULT_SPEED
 
+# and get the initial system temps
+get_temps
+
 # the main program loop:
 # - look at load averages every $SLEEP_DURATION seconds
 # - look at temperature deltas every $SLEEP_DURATION seconds
@@ -167,10 +179,8 @@ while true ; do
     LAST_RAM_TEMP=$RAM_TEMP                                                      
     LAST_WIFI_TEMP=$WIFI_TEMP                                                 
 
-    # and re-read the current temperatures            
-    CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input`                     
-    RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input`           
-    WIFI_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp2_input`
+    # and re-read the current temperatures
+    get_temps 
 
     # check the load averages
     check_load
