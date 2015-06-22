@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# OpenWRT fan control using RickStep's logic
+# OpenWRT fan control using RickStep and Chadster766's logic
 
 # set this to 1 for some debugging output
 VERBOSE=0
@@ -42,6 +42,10 @@ set_fan() {
 
         # write the new speed to the fan controller
         echo $2 > ${FAN_CTRL}
+    else
+        if [ $VERBOSE == 1 ]; then
+            echo "keeping fan speed at ${LAST_FAN_SPEED}"
+        fi
     fi
 }
 
@@ -107,11 +111,11 @@ check_cpu_temp() {
 
     if [ $CPU_TEMP -ge 70 ]; then
         set_fan CPU 255
-    elif [ $(float_ge CPU_TEMP 67.5) ]; then
+    elif [ $(float_ge $CPU_TEMP 67.5) == 1 ]; then
         set_fan CPU 223
     elif [ $CPU_TEMP -ge 65 ]; then
         set_fan CPU 191
-    elif [ $(float_ge $CPU_TEMP 62.5) ]; then
+    elif [ $(float_ge $CPU_TEMP 62.5) == 1 ]; then
         set_fan CPU 159
     elif [ $CPU_TEMP -ge 60 ]; then
         set_fan CPU 127
