@@ -3,7 +3,7 @@
 # OpenWRT fan control using RickStep and Chadster766's logic
 
 # SLEEP_DURATION and CPU_TEMP_CHECK need to be multiples of each other
-VERBOSE=1
+VERBOSE=0
 EMERGENCY_COOLDOWN_DURATION=30
 SLEEP_DURATION=5
 CPU_TEMP_CHECK=20
