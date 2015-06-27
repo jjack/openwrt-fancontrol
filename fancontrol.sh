@@ -3,7 +3,6 @@
 # OpenWRT fan control using RickStep and Chadster766's logic
 
 # SLEEP_DURATION and CPU_TEMP_CHECK need to be multiples of each other
-VERBOSE=0
 EMERGENCY_COOLDOWN_DURATION=30
 SLEEP_DURATION=5
 CPU_TEMP_CHECK=20
@@ -11,6 +10,7 @@ DEFAULT_SPEED=100
 EMERGENCY_COOLDOWN_TEMP_CHANGE=3                         
 
 # DON'T MESS WITH THESE
+VERBOSE=0
 LAST_FAN_SPEED=$DEFAULT_SPEED
 EMERGENCY_COOLDOWN=0                
 EMERGENCY_COOLDOWN_TIMER=0                         
@@ -18,6 +18,11 @@ ELAPSED_TIME=0
 CPU_TEMP=0
 RAM_TEMP=0
 WIFI_TEMP=0
+
+# determine verbose mode
+if [ ! -z "$1" ]; then
+    VERBOSE=1
+fi
 
 # determine fan controller
 if [ -d /sys/devices/pwm_fan ]; then
@@ -28,7 +33,7 @@ else
     exit 0
 fi
 
-# retreive new cpu, ram, and wifi temps
+# retrieve new cpu, ram, and wifi temps
 get_temps() {
     CPU_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon2/temp1_input` 
     RAM_TEMP=`cut -c1-2 /sys/class/hwmon/hwmon1/temp1_input` 
