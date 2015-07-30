@@ -4,25 +4,31 @@ A replacement for /sbin/fan_ctrl.sh, based on [this post](https://forum.openwrt.
 
 To use it:
 
-* Download the new fan controller and save it /etc/ and make it executable
+* Download the new fan controller, save it to  /etc/, and make it executable.
 ```
 wget --no-check-certificate https://raw.githubusercontent.com/jjack/openwrt-fancontrol/master/fancontrol.sh -O /etc/fancontrol.sh
 chmod +x fancontrol.sh
 ```
 
-* Test it to make sure it runs correctly
+* Test it to make sure that it runs correctly.
 ```
 /etc/fancontrol.sh verbose
 ```
 
 * Let it run in the background to keep your router cool.
-* You'll probably also want to start this on boot. In LuCI that's in System > Startup
 ```
 /etc/fancontrol.sh &
 ```
 
-*	Disable the original fan controller in your cron by removing or commenting out the following line.
-*	In LuCI that's in System > Scheduled Tasks
+*	Disable the orginal fan controller.
+*	Remove or comment out this line from /etc/crontabs/root (In LuCI, it's System > Scheduled Tasks)
 ```
  */5 * * * * /sbin/fan_ctrl.sh
+```
+
+## optional
+* Have this run on boot.
+* Add this to /etc/rc.local (In LuCI, it's System > Startup)
+```
+/etc/fancontrol.sh &
 ```
