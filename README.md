@@ -12,7 +12,7 @@ chmod +x fancontrol.sh
 
 * Test it to make sure it runs correctly
 ```
-./fancontrol.sh verbose
+/etc/fancontrol.sh verbose
 ```
 
 * Let it run in the background to keep your router cool.
